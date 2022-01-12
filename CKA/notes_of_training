@@ -1,1 +1,27 @@
 # This file records the kubernetes commands in CKA training course.
+1. Get running pods numbers
+   kubectl get pods
+
+2. Create a new pod with the nginx image
+   kubectl run nginx --image=nginx      // kubectl run POD_NAME --image=POD_IMAGE_NAME
+   
+   kubectl run nginx --image=nginx --dru-run=client -o yaml > pod.yaml  // one can dry run to check pod details in yaml file
+   kubectl apply -f pod.yaml
+   
+3. What is the image used to create the new pods?
+   kubectl describe pod POD_NAMES | grep -i image
+   
+4. Which nodes are these pods placed on?
+   kubectl get pods -o wide    // There is a column named 'node'
+   
+5. How many containers are part of the pod 'webapp'?
+   kubectl get pods webapp
+   
+6. What is the state of container 'agentx' in the pod 'webapp'?
+   kubectl describe pod webapp  // then to check state under each container
+   
+7. Delete pod webapp
+   kubectl delete pod webapp
+   
+8. Change the image name for a pod
+   kubectl edit pod nginx        // find the image name and edit it.
