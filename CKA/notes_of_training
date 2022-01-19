@@ -5,7 +5,7 @@
 2. Create a new pod with the nginx image
    kubectl run nginx --image=nginx      // kubectl run POD_NAME --image=POD_IMAGE_NAME
    
-   kubectl run nginx --image=nginx --dru-run=client -o yaml > pod.yaml  // one can dry run to check pod details in yaml file
+   kubectl run nginx --image=nginx --dry-run=client -o yaml > pod.yaml  // one can dry run to check pod details in yaml file
    kubectl apply -f pod.yaml
    
 3. What is the image used to create the new pods?
