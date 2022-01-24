@@ -25,3 +25,29 @@
    
 8. Change the image name for a pod
    kubectl edit pod nginx        // find the image name and edit it.
+
+9. Get replicasets
+   kubectl get replicasets.apps
+   
+controlplane ~ ✖ kubectl get replicasets.apps
+NAME              DESIRED   CURRENT   READY   AGE
+new-replica-set   4         4         0       36s
+
+We can see that the DESIRED pods numbers in the replica. Replica will always make sure the DESIRED number of pods running. How many are deleted, then how many will be created automatically.
+
+10. Get the image used to create pods in the replica.
+    kubectl describe replicasets.apps RELICA_NAME
+    
+11. Correct replica apiVersion:
+    controlplane ~ ➜  kubectl apply -f replicaset-definition-1.yaml 
+error: unable to recognize "replicaset-definition-1.yaml": no matches for kind "ReplicaSet" in version "v1"
+
+   -> apps/v1
+   
+12. Delete ReplicaSet
+    kubectl delete replicasets.apps REPLICA_NAME
+    
+13. Scale (up/down) replica
+    kubectl scale replicaset --replicas=5 REPLICA_SET_NAME    // up from 4 to 5
+    kubectl scale replicaset --replicas=2 REPLICA_SET_NAME    // dwon from 5 to 2
+
