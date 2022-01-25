@@ -1,4 +1,7 @@
 # This file records the kubernetes commands in CKA training course.
+
+-> Practice with pods
+
 1. Get running pods numbers
    kubectl get pods
 
@@ -25,6 +28,8 @@
    
 8. Change the image name for a pod
    kubectl edit pod nginx        // find the image name and edit it.
+
+-> Practice with ReplicaSets
 
 9. Get replicasets
    kubectl get replicasets.apps
