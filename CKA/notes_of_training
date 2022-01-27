@@ -56,3 +56,19 @@ error: unable to recognize "replicaset-definition-1.yaml": no matches for kind "
     kubectl scale replicaset --replicas=5 REPLICA_SET_NAME    // up from 4 to 5
     kubectl scale replicaset --replicas=2 REPLICA_SET_NAME    // dwon from 5 to 2
 
+
+-> Practice with Deployment
+14. How many deployments
+    kubectl get deployments.apps
+    
+15. Create deployment:
+    Name: httpd-frontend;
+Replicas: 3;
+Image: httpd:2.4-alpine
+
+
+    kubectl create deployment httpd-frontend --image=httpd:2.4-alpine
+    
+    kubectl scale deployment --replicas=3 httpd-frontend
+    
+    
