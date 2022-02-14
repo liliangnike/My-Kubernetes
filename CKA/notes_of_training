@@ -1,6 +1,6 @@
 # This file records the kubernetes commands in CKA training course.
 
--> Practice with pods
+/************************************ Practice with pods *************************************************/
 
 1. Get running pods numbers
    kubectl get pods
@@ -29,7 +29,8 @@
 8. Change the image name for a pod
    kubectl edit pod nginx        // find the image name and edit it.
 
--> Practice with ReplicaSets
+
+/************************************ Practice with ReplicaSets *************************************************/
 
 9. Get replicasets
    kubectl get replicasets.apps
@@ -57,7 +58,10 @@ error: unable to recognize "replicaset-definition-1.yaml": no matches for kind "
     kubectl scale replicaset --replicas=2 REPLICA_SET_NAME    // dwon from 5 to 2
 
 
--> Practice with Deployment
+
+/************************************ Practice with Deployment *************************************************/
+
+
 14. How many deployments
     kubectl get deployments.apps
     
