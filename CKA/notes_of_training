@@ -1,6 +1,6 @@
 # This file records the kubernetes commands in CKA training course.
 
-/************************************ Practice with pods *************************************************/
+/************************************ Practice with pods ************************************/
 
 1. Get running pods numbers
    kubectl get pods
@@ -30,7 +30,7 @@
    kubectl edit pod nginx        // find the image name and edit it.
 
 
-/************************************ Practice with ReplicaSets *************************************************/
+/************************************ Practice with ReplicaSets ************************************/
 
 9. Get replicasets
    kubectl get replicasets.apps
@@ -59,7 +59,7 @@ error: unable to recognize "replicaset-definition-1.yaml": no matches for kind "
 
 
 
-/************************************ Practice with Deployment *************************************************/
+/************************************ Practice with Deployment ************************************/
 
 
 14. How many deployments
@@ -74,5 +74,40 @@ Image: httpd:2.4-alpine
     kubectl create deployment httpd-frontend --image=httpd:2.4-alpine
     
     kubectl scale deployment --replicas=3 httpd-frontend
+    
+    
+
+/************************************ Practice with Namespace ************************************/
+
+16.  How many Namespace
+     kubectl get ns --no-headers | wc -l
+     
+17. How many pods exist in the namespace 'research'?
+    kubectl get pods -n research --no-headers
+    
+18. Create a POD in the 'finance' namespace. (Name: redis, Image Name: redis)
+    1) kubectl run redis --image=redis --dry-run=client -o yaml > pod.yaml
+    2) vi pod.yaml
+       apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: redis
+  name: redis
+  namespace: finance    #add this line 
+spec:
+  containers:
+  - image: redis
+    name: redis
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+
+    3) kubectl apply -f pod.yaml
+    
+19. Which namespace has the 'blue' pod in it?
+    kubectl get pods --all-namespaces | grep blue
     
     
