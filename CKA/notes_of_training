@@ -151,3 +151,34 @@ selector: simple-webapp
 
     kubectl expose deployment simple-webapp-deployment --name=webapp-service --target-port=8080 --type=NodePort --port=8080 --dry-run=client -o yaml > svc.yaml
     kubectl apply -f svc.yaml
+
+
+ /************************************ Practice with Imperative Commands ************************************/
+ 
+ 25. Deploy a pod named nginx-pod using the nginx:alpine image. Use imperative commands only.
+     kubectl run nginx-pod --image=nginx:alpine
+     
+     Deploy a redis pod using the redis:alpine image with the labels set to tier=db.
+     kubectl run redis --image=redis:alpine --labels=tier=db
+         
+ 26. Create a service redis-service to expose the redis application within the cluster on port 6379.
+     kubectl expose pod redis --name redis-service --port 6379 --target-port 6379
+     
+ 27. Create a deployment named webapp using the image kodekloud/webapp-color with 3 replicas.
+     controlplane ~ ➜  kubectl create deployment webapp --image=kodekloud/webapp-color
+     deployment.apps/webapp created
+
+     controlplane ~ ➜  kubectl scale deployment --replicas=3 webapp
+     deployment.apps/webapp scaled
+     
+28.  Create a new pod called custom-nginx using the nginx image and expose it on container port 8080.
+     kubectl run custom-nginx --image=nginx --port 8080  
+     
+29. Create a new deployment called redis-deploy in the dev-ns namespace with the redis image. It should have 2 replicas.
+     kubectl create deployment redis-deploy --image=redis --namespace=dev-ns --dry-run=client -o yaml > redis.yaml
+     kubectl apply -f redis.yaml
+     
+30. Create a pod called httpd using the image httpd:alpine in the default namespace. Next, create a service of type ClusterIP by the same name (httpd). The target port for the service should be 80.
+    kubectl run httpd --image=httpd:alpine --port 80 --expose --dry-run=client -o yaml
+    
+ 
