@@ -182,3 +182,28 @@ selector: simple-webapp
     kubectl run httpd --image=httpd:alpine --port 80 --expose --dry-run=client -o yaml
     
  
+/************************************ Practice with Manually schedule ************************************/
+31. Manually schedule the pod on node01. Delete and recreate the POD if necessary.
+    kubectl delete pod nginx
+    
+    root@controlplane:~# vi nginx.yaml 
+root@controlplane:~# cat nginx.yaml 
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+spec:
+  nodeName: node01     #add nodeName to pod yaml file
+  containers:
+  -  image: nginx
+     name: nginx
+     
+     
+     kubectl apply -f nginx.yaml
+     
+     
+ 
+     
+     
+     
