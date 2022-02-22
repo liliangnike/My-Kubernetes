@@ -204,6 +204,18 @@ spec:
      
      
  
+ /************************************ Practice with Labels and Selectors ************************************/    
+ 32. We have deployed a number of PODs. They are labelled with tier, env and bu. How many PODs exist in the dev environment?
+     kubectl get pods -l env=dev
+     
+     How many PODs are in the finance business unit (bu)?
+     kubectl get pods -l bu=finance
+     
+ 33. How many objects are in the prod environment including PODs, ReplicaSets and any other objects?
+     kubectl get all -l env=prod --no-headers | wc -l
+     
+     Identify the POD which is part of the prod environment, the finance BU and of frontend tier?
+     kubectl get pods -l env=prod,bu=finance,tier=frontend
      
      
      
