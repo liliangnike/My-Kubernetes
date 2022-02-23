@@ -218,4 +218,93 @@ spec:
      kubectl get pods -l env=prod,bu=finance,tier=frontend
      
      
+/************************************ Practice with Taint and Tolerance ************************************/    
+34. Create a taint on node01 with key of spray, value of mortein and effect of NoSchedule
+    kubectl taint node node01 spray=mortein:NoSchedule
+   
+35. Create another pod named bee with the nginx image, which has a toleration set to the taint mortein.
+    kubectl run bee --image=nginx --restart=Never --dry-run=client -o yaml > bee.yaml
+       
+       cat bee.yaml
+       apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: bee
+  name: bee
+spec:
+  containers:
+  - image: nginx
+    name: bee
+ # Add below content
+  tolerations:
+          - effect: NoSchedule
+            key: spray
+            operator: Equal
+            value: mortein
+          
+          kubectl apply -f bee.yaml
+          
+36. Remove the taint on controlplane, which currently has the taint effect of NoSchedule.
+    kubectl taint node controlplane node-role.kubernetes.io/master:NoSchedule-    # add - 
+    
+ /************************************ Practice with Node Affinity ************************************/ 
+ 37. How many Labels exist on node node01?
+     kubectl  get  nodes node01 --show-labels 
      
+ 38. Apply a label color=blue to node node01
+     kubectl label nodes node01 color=blue
+  
+ 39. Create a new deployment named blue with the nginx image and 3 replicas.
+     kubectl create deployment blue --image=nginx
+     kubectl scale deployment blue --replicas=3
+    
+ 40. Set Node Affinity to the deployment to place the pods on node01 only.
+     Name: blue
+Replicas: 3
+Image: nginx
+NodeAffinity: requiredDuringSchedulingIgnoredDuringExecution
+Key: color
+values: blue
+
+
+      1) add affinity rule:
+        spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: color
+                operator: In
+                values:
+                  - blue
+                  
+       2) kubectl delete deployments.apps blue
+       
+       3) kubectl applfy -f blue.yaml
+      
+      
+41. Create a new deployment named red with the nginx image and 2 replicas, and ensure it gets placed on the controlplane node only.
+    Use the label - node-role.kubernetes.io/master - set on the controlplane node.      
+Name: red
+Replicas: 2
+Image: nginx
+NodeAffinity: requiredDuringSchedulingIgnoredDuringExecution
+Key: node-role.kubernetes.io/master
+Use the right operator    
+
+         affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
+                
+root@controlplane:~# kubectl create deployment red --image=nginx --dry-run=client -o yaml > red.yaml
+root@controlplane:~# vi red.yaml 
+root@controlplane:~# kubectl apply -f red.yaml 
+                  
+                        
