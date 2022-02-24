@@ -307,4 +307,55 @@ root@controlplane:~# kubectl create deployment red --image=nginx --dry-run=clien
 root@controlplane:~# vi red.yaml 
 root@controlplane:~# kubectl apply -f red.yaml 
                   
-                        
+/************************************ Practice with Resource ************************************/    
+42. The elephant pod runs a process that consume 15Mi of memory. Increase the limit of the elephant pod to 20Mi.
+    controlplane ~ ➜  kubectl get pod elephant -o yaml > elephant.yaml
+    controlplane ~ ➜  vi elephant.yaml    # modify the limit memory to 20Mi
+    controlplane ~ ➜  kubectl delete pod elephant 
+            pod "elephant" deleted
+    controlplane ~ ➜  kubectl apply -f elephant.yaml 
+    
+    
+/************************************ Practice with DaemonSets ************************************/ 
+43. How many DaemonSets are created in the cluster in all namespaces?
+    kubectl get daemonsets --all-namespaces
+   
+44. On how many nodes are the pods scheduled by the DaemonSets kube-proxy
+    kubectl -n kube-system get pods -o wide | grep proxy
+
+45. What is the image used by the POD deployed by the kube-flannel-ds DaemonSet?
+    kubectl -n kube-system describe ds kube-flannel-ds | grep -i image
+    
+    
+46. Deploy a DaemonSet for FluentD Logging. Use the given specifications.
+Name: elasticsearch
+Namespace: kube-system
+Image: k8s.gcr.io/fluentd-elasticsearch:1.20
+
+     kubectl create deployment elasticsearch --image=k8s.gcr.io/fluentd-elasticsearch:1.20 --dry-run=client -o yaml > elastic.yaml
+     
+     vi elastic.yaml and edit as below:
+     apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: elasticsearch
+  name: elasticsearch
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+      - image: k8s.gcr.io/fluentd-elasticsearch:1.20
+        name: fluentd-elasticsearch
+        
+        
+        kubectl apply -f elastic.yaml 
+        kubectl -n kube-system get ds elasticsearch
