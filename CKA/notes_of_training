@@ -359,3 +359,52 @@ spec:
         
         kubectl apply -f elastic.yaml 
         kubectl -n kube-system get ds elasticsearch
+
+/************************************ Practice with Static pods ************************************/ 
+47. How many static pods exist in this cluster in all namespaces?
+    kubectl get pods --all-namespaces  # check the pods name including string 'master'
+    
+48. What is the path of the directory holding the static pod definition files?
+    ps -ef | grep kubelet
+    
+    find this --config=/var/lib/kubelet/config.yaml
+    
+    grep -i static /var/lib/kubelet/config.yaml
+    staticPodPath: /etc/kubernetes/manifests
+
+49. Check image for kube api
+     cd /etc/kubernetes/manifests
+    grep -i image kube-apiserver.yaml
+    
+    
+ 50. Create a static pod named static-busybox that uses the busybox image and the command sleep 1000   
+     cd /etc/kubernetes/manifests
+     kubectl run static-busybox --image=busybox --command sleep 1000 --restart=Never --dry-run=client -o yaml > busybox.yaml
+     
+     Then the static pod will be created automatically
+     
+     
+ 51. We just created a new static pod named static-greenbox. Find it and delete it.
+     Static pod is per node, should ssh to the corresponding node to delete.
+     
+root@controlplane:/etc/kubernetes/manifests# kubectl get node node01 -o wide
+NAME     STATUS   ROLES    AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
+node01   Ready    <none>   39m   v1.20.0   10.11.35.9    <none>        Ubuntu 18.04.5 LTS   5.4.0-1065-gcp   docker://19.3.0
+root@controlplane:/etc/kubernetes/manifests# ssh 10.11.35.9
+
+
+
+root@node01:~# ps -ef | grep kubelet | grep config
+root     18445     1  0 07:00 ?        00:00:08 /usr/bin/kubelet --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --config=/var/lib/kubelet/config.yaml --network-plugin=cni --pod-infra-container-image=k8s.gcr.io/pause:3.2
+root@node01:~# grep -i static /var/lib/kubelet/config.yaml
+staticPodPath: /etc/just-to-mess-with-you
+root@node01:~# cd /etc/just-to-mess-with-you
+root@node01:/etc/just-to-mess-with-you# ls
+greenbox.yaml
+
+
+rm -rf greenbox.yaml
+
+
+pod will be deleted automatically
+     
