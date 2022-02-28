@@ -440,3 +440,20 @@ Status: Running
      kubectl create -f nginx-pod.yaml
     
     
+/************************************ Practice with Rolling Update ************************************/ 
+55. Let us try that. Upgrade the application by setting the image on the deployment to kodekloud/webapp-color:v2 Do not delete and re-create the deployment. Only set the new image name for the existing deployment.
+Deployment Name: frontend
+Deployment Image: kodekloud/webapp-color:v2
+
+    kubectl edit deployments.apps frontend   //update image name to v2
+    
+ 
+ 56. Up to how many PODs can be down for upgrade at a time
+     kubectl describe deployments.apps frontend
+     
+     then we can see that, RollingUpdateStrategy:  25% max unavailable, 25% max surge
+     
+     25% * 4 = 1 pod max can be down.
+     
+     
+     
