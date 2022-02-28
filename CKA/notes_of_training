@@ -457,3 +457,74 @@ Deployment Image: kodekloud/webapp-color:v2
      
      
      
+/************************************ Practice with Commands & Arguments ************************************/ 
+57. Create a pod with the ubuntu image to run a container to sleep for 5000 seconds. Modify the file ubuntu-sleeper-2.yaml.
+Pod Name: ubuntu-sleeper-2
+Command: sleep 5000
+
+     controlplane ~ ✖ cat ubuntu-sleeper-2.yaml 
+apiVersion: v1 
+kind: Pod 
+metadata:
+  name: ubuntu-sleeper-2 
+spec:
+  containers:
+  - name: ubuntu
+    image: ubuntu
+    command: ["sleep", "5000"]
+    
+    
+    kubectl apply -f ubuntu-sleeper-2.yaml
+    
+58.  What command is run at container startup?
+     controlplane ~/webapp-color-2 ➜  cat *
+FROM python:3.6-alpine
+
+RUN pip install flask
+
+COPY . /opt/
+
+EXPOSE 8080
+
+WORKDIR /opt
+
+ENTRYPOINT ["python", "app.py"]
+
+CMD ["--color", "red"]
+apiVersion: v1 
+kind: Pod 
+metadata:
+  name: webapp-green
+  labels:
+      name: webapp-green 
+spec:
+  containers:
+  - name: simple-webapp
+    image: kodekloud/webapp-color
+    command: ["--color","green"]   # only command here, not argument
+    // command: ["python", "app.py"]
+    // args: ["--color", "pink"]     # answer should be python app.py --color pink
+    
+    
+    --color green
+    
+ 
+ 59. Create a pod with the given specifications. By default it displays a blue background. Set the given command line arguments to change it to green
+     Pod Name: webapp-green
+Image: kodekloud/webapp-color
+Command line arguments: --color=green
+
+     apiVersion: v1 
+kind: Pod 
+metadata:
+  name: webapp-green
+  labels:
+      name: webapp-green 
+spec:
+  containers:
+  - name: simple-webapp
+    image: kodekloud/webapp-color
+    args: ["--color", "green"]
+    
+    
+    kubectl apply -f pod.yaml
