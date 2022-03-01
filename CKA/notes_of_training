@@ -528,3 +528,43 @@ spec:
     
     
     kubectl apply -f pod.yaml
+
+/************************************ Practice with Environment Variables ************************************/ 
+60. Update the environment variable on the POD to display a green background. Note: Delete and recreate the POD. Only make the necessary changes. Do not modify the name of the Pod.
+Pod Name: webapp-color
+Label Name: webapp-color
+Env: APP_COLOR=green
+
+    kubectl get pod webapp-color -o yaml > pod.yaml
+    
+    kubectl delete pod webapp-color
+    
+    vi pod.yaml -> change environment value to 'green'
+    
+    kubectl apply -f pod.yaml
+    
+    
+    
+61. Create a new ConfigMap for the webapp-color POD. Use the spec given below.
+ConfigName Name: webapp-config-map
+Data: APP_COLOR=darkblue
+
+    kubectl create configmap webapp-config-map --from-literal=APP_COLOR=darkblue
+    
+62. Update the environment variable on the POD to use the newly created ConfigMap
+    Pod Name: webapp-color
+EnvFrom: webapp-config-map
+
+    kubectl delete pod webapp-color
+    
+    kubectl explain pods --recursive | grep envFrom -A3
+    
+    replace environment as below:
+     containers:
+  - envFrom:       
+      - configMapRef:       
+               name: webapp-config-map
+               
+               
+     kubectl apply -f pod.yaml
+    
