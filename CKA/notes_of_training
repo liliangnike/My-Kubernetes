@@ -568,3 +568,32 @@ EnvFrom: webapp-config-map
                
      kubectl apply -f pod.yaml
     
+/************************************ Practice with Secret ************************************/ 
+63. How many secrets are defined in the default-token secret?
+    kubectl describe secrets default-token
+    
+    then to check data section.
+    
+64. Create a new secret named db-secret with the data given below.
+    Secret Name: db-secret
+Secret 1: DB_Host=sql01
+Secret 2: DB_User=root
+Secret 3: DB_Password=password123
+
+     kubectl create secret generic db-secret --from-literal=DB_Host=sql01 --from-literal=DB_User=root --from-literal=DB_Password=password123
+     
+ 65. Configure webapp-pod to load environment variables from the newly created secret.
+ Pod name: webapp-pod
+Image name: kodekloud/simple-webapp-mysql
+Env From: Secret=db-secret
+
+kubectl get pod webapp-pod -o yaml > web.yaml
+
+vi web.yaml
+   envFrom: 
+      - secretRef:          
+               name: db-secret    
+               
+    kubectl apply -f web.yaml
+    
+    
