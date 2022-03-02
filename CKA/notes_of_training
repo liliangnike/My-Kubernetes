@@ -596,4 +596,49 @@ vi web.yaml
                
     kubectl apply -f web.yaml
     
+/************************************ Practice with Multi Container Pod ************************************/ 
+66. Create a multi-container pod with 2 containers. Use the spec given below.
+If the pod goes into the crashloopbackoff then add sleep 1000 in the lemon container.
+
+Name: yellow
+Container 1 Name: lemon
+Container 1 Image: busybox
+Container 2 Name: gold
+Container 2 Image: redis
+
+     kubectl run yellow --image=busybox --restart=Never --dry-run=client -o yaml > pod.yaml
+     
+spec:
+  containers:
+  - image: busybox
+    name: lemon
+  - image: redis
+    name: gold
     
+     
+    kubectl apply -f pod.yaml
+    
+67. Edit the pod to add a sidecar container to send logs to Elastic Search. Mount the log volume to the sidecar container.
+Name: app
+Container Name: sidecar
+Container Image: kodekloud/filebeat-configured
+Volume Mount: log-volume
+Mount Path: /var/log/event-simulator/
+Existing Container Name: app
+Existing Container Image: kodekloud/event-simulator
+
+    kubectl -n elastic-stack get pod app -o yaml > app.yaml
+    
+    spec:
+  containers:
+  - image: kodekloud/event-simulator
+    imagePullPolicy: Always
+    name: app
+    volumeMounts:
+    - mountPath: /log
+      name: log-volume
+  - image: kodekloud/filebeat-configured
+    name: sidecar
+    volumeMounts:
+    - mountPath: /var/log/event-simulator/
+      name: log-volume
