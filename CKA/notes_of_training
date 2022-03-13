@@ -1139,3 +1139,504 @@ spec:
       protocol: UDP
     - port: 53
       protocol: TCP    
+
+
+/************************************ Practice with Persistent Volumn Claims ************************************/
+pod -> pvc -> pv
+So if we want to delete pvc, please delete pod which is binding to this PVC firstly.
+
+114. Configure a volume to store these logs at /var/log/webapp on the host.
+Name: webapp
+Image Name: kodekloud/event-simulator
+Volume HostPath: /var/log/webapp
+Volume Mount: /log
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webapp
+spec:
+  containers:
+  - name: event-simulator
+    image: kodekloud/event-simulator
+    env:
+    - name: LOG_HANDLERS
+      value: file
+    volumeMounts:
+    - mountPath: /log
+      name: log-volume
+
+  volumes:
+  - name: log-volume
+    hostPath:
+      # directory location on host
+      path: /var/log/webapp
+      # this field is optional
+      type: Directory
+	 
+	 
+115. Create a Persistent Volume with the given specification.
+Volume Name: pv-log
+Storage: 100Mi
+Access Modes: ReadWriteMany
+Host Path: /pv/log
+Reclaim Policy: Retain
+
+
+    apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-log
+spec:
+  persistentVolumeReclaimPolicy: Retain
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 100Mi
+  hostPath:
+    path: /pv/log
+	
+	
+116. Let us claim some of that storage for our application. Create a Persistent Volume Claim with the given specification.
+Volume Name: claim-log-1
+Storage Request: 50Mi
+Access Modes: ReadWriteOnce
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: claim-log-1
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Mi
+	  
+117. Update the webapp pod to use the persistent volume claim as its storage.
+Replace hostPath configured earlier with the newly created PersistentVolumeClaim.
+
+Name: webapp
+Image Name: kodekloud/event-simulator
+Volume: PersistentVolumeClaim=claim-log-1
+Volume Mount: /log
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webapp
+spec:
+  containers:
+  - name: event-simulator
+    image: kodekloud/event-simulator
+    env:
+    - name: LOG_HANDLERS
+      value: file
+    volumeMounts:
+    - mountPath: /log
+      name: log-volume
+
+  volumes:
+  - name: log-volume
+    persistentVolumeClaim:
+      claimName: claim-log-1
+	  
+	  
+/************************************ Practice with Storage Class ************************************/	
+118. Create a new pod called nginx with the image nginx:alpine. 
+The Pod should make use of the PVC local-pvc and mount the volume at the path /var/www/html.
+The PV local-pv should in a bound state.  
+	  
+	  ---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  labels:
+    name: nginx
+spec:
+  containers:
+  - name: nginx
+    image: nginx:alpine
+    volumeMounts:
+      - name: local-persistent-storage
+        mountPath: /var/www/html
+  volumes:
+    - name: local-persistent-storage
+      persistentVolumeClaim:
+        claimName: local-pvc
+		
+119. Create a new Storage Class called delayed-volume-sc that makes use of the below specs:
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: delayed-volume-sc
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+
+
+/************************************ Practice with Explore Kubernetes Environment ************************************/	
+120. What is the Internal IP address of the controlplane node in this cluster?
+     kubectl get node controlplane -o wide    then check INTERNAL_IP
+	 
+121. What is the network interface configured for cluster connectivity on the master node?
+    root@controlplane:~# ip addr | grep 10.29.230.9
+    inet 10.29.230.9/24 brd 10.29.230.255 scope global eth0
+	
+	ip link show eth0  to check MAC address
+
+122. What is the MAC address assigned to node01?
+     arp node01     //run from master node
+	 
+	 check default route -> ip route show default
+	 
+123. What is the port the kube-scheduler is listening on in the controlplane node?
+     netstat -nplt | grep scheduler
+
+/************************************ Practice with CNI weave & Deploy Network Solution ************************************/
+124. Inspect the kubelet service and identify the network plugin configured for Kubernetes.
+     ps -aux | grep kubelet   and look at the configured --network-plugin flag
+	 
+	 Identify which of the below plugins is not available in the list of available CNI plugins on this host?
+	 ls /opt/cni/bin
+	 
+	 What is the CNI plugin configured to be used on this kubernetes cluster?
+	 ls /etc/cni/net.d/
+	 
+	 What binary executable file will be run by kubelet after a container and its associated namespace are created.
+	 Look at the type field in file /etc/cni/net.d/10-flannel.conflist
+	 
+125. Deploy weave-net networking solution to the cluster.
+Replace the default IP address and subnet of weave-net to the 10.50.0.0/16.
+     check host ip: ip a | grep eth0
+	 
+	 kubectl get po -n kube-system 
+	 
+	 kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')&env.IPALLOC_RANGE=10.50.0.0/16"
+    
+/************************************ Practice with Networking weave ************************************/
+
+126. What is the Networking Solution used by this cluster?
+     Check the config file located at /etc/cni/net.d/
+	 
+	 How many weave agents/peers are deployed in this cluster?
+	 kubectl get pods -n kube-system | grep weave | wc -l
+	 
+	 What is the POD IP address range configured by weave?
+	 ip addr show weave
+	 
+	 
+127. What is the default gateway configured on the PODs scheduled on node01?
+Try scheduling a pod on node01 and check ip route output
+
+    kubectl run busybox --image=busybox --command sleep 1000 --dry-run=client -o yaml > pod.yaml
+	
+
+spec:
+  nodeName: node01
+  containers:
+
+    kubectl apply -f pod.yaml
+	
+	kubectl exec -it busybox -- sh   (it means interactive)
+	
+	/ # ip route
+default via 10.50.192.0 dev eth0 
+10.50.0.0/16 dev eth0 scope link  src 10.50.192.1 
+
+/************************************ Practice with Service Networking ************************************/
+128. What network range are the nodes in the cluster part of?
+     ip addr | grep eth0
+	 ipcalc 10.27.54.3/24
+	 
+	 What is the range of IP addresses configured for PODs on this cluster?
+	 kubectl logs <weave-pod-name> weave -n kube-system and look for ipalloc-range
+	 
+	 What is the IP Range configured for the services within the cluster?
+	 cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep cluster-ip-range
+	 
+	 What type of proxy is the kube-proxy configured to use?
+	 kubectl logs <kube-proxy-pod-name> -n kube-system
+	 
+	 How does this Kubernetes cluster ensure that a kube-proxy pod runs on all nodes in the cluster?
+	 kubectl get daemonsets -n kube-system
+	 
+	 
+	 
+	 
+/************************************ Practice with Core DNS ************************************/
+129. Identify the DNS solution implemented in this cluster.
+     kubectl get pods -n kube-system
+	 
+	 What is the IP of the CoreDNS server that should be configured on PODs to resolve services?
+	 kubectl get service -n kube-system
+	 
+	 Where is the configuration file located for configuring the CoreDNS service?
+	 kubectl -n kube-system describe deployments.apps coredns | grep -A2 Args | grep Corefile
+	 
+	 
+	 What is the root domain/zone configured for this kubernetes cluster?
+	 kubectl describe configmap coredns -n kube-system    and look for the entry after kubernetes.
+	 
+	 
+	 From the hr pod nslookup the mysql service and redirect the output to a file /root/CKA/nslookup.out
+	 kubectl exec -it hr -- nslookup mysql.payroll > /root/CKA/nslookup.out
+	 
+
+/************************************ Practice with Ingress Networking ************************************/
+130. Which namespace is the Ingress Controller deployed in?
+     Use the command kubectl get all -A and identify the namespace of Ingress Controller.
+	 
+	 
+	 If the requirement does not match any of the configured paths what service are the requests forwarded to?
+	 kubectl describe ingress --namespace app-space and look at the Default backend field.
+	 
+	 
+131. You are requested to add a new path to your ingress to make the food delivery application available to your customers.
+Make the new application available at /eat.
+    - backend:
+          service:
+            name: food-service
+            port:
+              number: 8080
+        path: /eat
+        pathType: Prefix
+		
+		
+132. You are requested to make the new application available at /pay.
+    Ingress Created
+Path: /pay
+Configure correct backend service
+Configure correct backend port
+
+
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-ingress
+  namespace: critical-space
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /pay
+        pathType: Prefix
+        backend:
+          service:
+           name: pay-service
+           port:
+            number: 8282
+			
+			
+134. Let us now deploy an Ingress Controller. First, create a namespace called ingress-space.
+     kubectl create namespace ingress-space
+	 
+	 
+	 
+	 The NGINX Ingress Controller requires a ConfigMap object. Create a ConfigMap object in the ingress-space.
+Use the spec given below. No data needs to be configured in the ConfigMap.
+     kubectl create configmap nginx-configuration --namespace ingress-space
+	 
+	 The NGINX Ingress Controller requires a ServiceAccount. Create a ServiceAccount in the ingress-space namespace.
+	 kubectl create serviceaccount ingress-serviceaccount --namespace ingress-space 
+	 
+	 
+135. Let us now create a service to make Ingress available to external users.
+Create a service following the given specs.
+     Name: ingress
+Type: NodePort
+Port: 80
+TargetPort: 80
+NodePort: 30080
+Namespace: ingress-space
+Use the right selector
+
+
+     kubectl expose deployment ingress-controller -n ingress-space --type=NodePort --port=80 --name=ingress --dry-run=client -o yaml > ingress.yam
+	 
+	 and manually add the given node port and namespace
+	 
+	 
+	 apiVersion: v1
+kind: Service
+metadata:
+  name: ingress
+  namespace: ingress-space
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+    nodePort: 30080
+    name: http
+  - port: 443
+    targetPort: 443
+    protocol: TCP
+    name: https
+  selector:
+    name: nginx-ingress
+	
+	
+	
+136. Create the ingress resource to make the applications available at /wear and /watch on the Ingress service.
+Create the ingress in the app-space namespace.
+Ingress Created
+Path: /wear
+Path: /watch
+Configure correct backend service for /wear
+Configure correct backend service for /watch
+Configure correct backend port for /wear service
+Configure correct backend port for /watch service
+
+
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-wear-watch
+  namespace: app-space
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /wear
+        pathType: Prefix
+        backend:
+          service:
+           name: wear-service
+           port: 
+            number: 8080
+      - path: /watch
+        pathType: Prefix
+        backend:
+          service:
+           name: video-service
+           port:
+            number: 8080
+			
+/************************************ Practice with Cluster Install Using kubeadm************************************/
+137. Install the kubeadm and kubelet packages on the controlplane and node01. Use the exact version of 1.21.0-00 for both.
+     Refer to https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+	 
+	 Below steps are performed on both nodes:
+set net.bridge.bridge-nf-call-iptables to 1
+	 
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+br_netfilter
+EOF
+
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+
+sudo sysctl --system
+
+Install kubeadm, kubectl and kubelet on all nodes
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl
+
+sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+sudo apt-get update
+sudo apt-get install -y kubelet=1.21.0-00 kubeadm=1.21.0-00 kubectl=1.21.0-00
+sudo apt-mark hold kubelet kubeadm kubectl
+
+
+138. Initialize Control Plane Node (Master Node). Use the following options:
+apiserver-advertise-address - Use the IP address allocated to eth0 on the controlplane node
+apiserver-cert-extra-sans - Set it to controlplane
+pod-network-cidr - Set to 10.244.0.0/16
+Once done, set up the default kubeconfig file and wait for node to be part of the cluster.
+
+root@controlplane:~# ifconfig eth0
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1450
+        inet 10.7.159.3  netmask 255.255.255.0  broadcast 10.7.159.255
+        ether 02:42:0a:07:9f:03  txqueuelen 0  (Ethernet)
+        RX packets 4792  bytes 604157 (604.1 KB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 4490  bytes 1796591 (1.7 MB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+		
+		
+
+kubeadm init --apiserver-cert-extra-sans=controlplane --apiserver-advertise-address 10.7.159.3 --pod-network-cidr=10.244.0.0/16
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+  
+  
+  
+  Generate a kubeadm join token
+  kubeadm token create --print-join-command
+  
+  
+ssh node01
+kubeadm join 10.7.159.3:6443 --token 0mfdxk.trhovr11wo2uxbzm --discovery-token-ca-cert-hash sha256:2ebaae81a57d08516e5d04f7b4a617bc1e35bd1bd06d62518045fc07b7e7694c 
+
+
+Install a Network Plugin. As a default, we will go with flannel:
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+
+/************************************ Practice with TroubleShooting************************************/
+The cluster is broken again. We tried deploying an application but it's not working. Troubleshoot and fix the issue.
+root@controlplane:/etc/systemd/system/kubelet.service.d# cd
+root@controlplane:~# vi /var/lib/kubelet/config.yaml
+root@controlplane:~# cd /etc/kubernetes/manifests
+root@controlplane:/etc/kubernetes/manifests# ls
+etcd.yaml  kube-apiserver.yaml  kube-controller-manager.yaml  kube-scheduler.yaml
+root@controlplane:/etc/kubernetes/manifests# vi kube-scheduler.yaml 
+
+
+Scale the deployment app to 2 pods.
+kubectl scale deploy app --replicas=2
+
+
+/************************************ Practice with Json Path************************************/
+
+Get the list of nodes in JSON format and store it in a file at /opt/outputs/nodes.json.
+kubectl get nodes -o json > /opt/outputs/nodes.json
+
+Use JSON PATH query to fetch node names and store them in /opt/outputs/node_names.txt.
+kubectl get nodes -o=jsonpath='{.items[*].metadata.name}' > /opt/outputs/node_names.txt
+
+
+Use JSON PATH query to retrieve the osImages of all the nodes and store it in a file /opt/outputs/nodes_os.txt.
+The osImages are under the nodeInfo section under status of each node.
+kubectl get nodes -o jsonpath='{.items[*].status.nodeInfo.osImage}' > /opt/outputs/nodes_os.txt
+
+
+ kube-config file is present at /root/my-kube-config. Get the user names from it and store it in a file /opt/outputs/users.txt.
+Use the command kubectl config view --kubeconfig=/root/my-kube-config to view the custom kube-config
+kubectl config view --kubeconfig=my-kube-config -o jsonpath="{.users[*].name}" > /opt/outputs/users.txt
+
+
+A set of Persistent Volumes are available. Sort them based on their capacity and store the result in the file /opt/outputs/storage-capacity-sorted.txt.
+kubectl get pv --sort-by=.spec.capacity.storage > /opt/outputs/storage-capacity-sorted.txt
+
+
+That was good, but we don't need all the extra details. Retrieve just the first 2 columns of output and store it in /opt/outputs/pv-and-capacity-sorted.txt.
+The columns should be named NAME and CAPACITY. Use the custom-columns option and remember, it should still be sorted as in the previous question.
+kubectl get pv --sort-by=.spec.capacity.storage -o=custom-columns=NAME:.metadata.name,CAPACITY:.spec.capacity.storage > /opt/outputs/pv-and-capacity-sorted.txt
+
+
+Use a JSON PATH query to identify the context configured for the aws-user in the my-kube-config context file and store the result in /opt/outputs/aws-context-name
+kubectl config view --kubeconfig=my-kube-config -o jsonpath="{.contexts[?(@.context.user=='aws-user')].name}" > /opt/outputs/aws-context-name
