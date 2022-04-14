@@ -676,7 +676,7 @@ initContainer Configured Correctly
    
 /************************************ Practice with Cluster Upgrade ************************************/
 71. How many nodes can host workloads in this cluster? Inspect the applications and taints set on the nodes.
-    kubectl get pod -o wide
+    kubectl describe each node to check taint
 	
 72. What is the latest stable version available for upgrade? Use the kubeadm tool
     kubeadm upgrade plan
