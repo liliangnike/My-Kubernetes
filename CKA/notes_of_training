@@ -1640,3 +1640,522 @@ kubectl get pv --sort-by=.spec.capacity.storage -o=custom-columns=NAME:.metadata
 
 Use a JSON PATH query to identify the context configured for the aws-user in the my-kube-config context file and store the result in /opt/outputs/aws-context-name
 kubectl config view --kubeconfig=my-kube-config -o jsonpath="{.contexts[?(@.context.user=='aws-user')].name}" > /opt/outputs/aws-context-name
+
+
+
+/************************************ Practice with Lighting Lab Path************************************/
+Q1. Solution:
+Here is the solution for this task. Please note that the output of these commands have not been added here.
+
+On the controlplane node:
+root@controlplane:~# kubectl drain controlplane --ignore-daemonsets
+root@controlplane:~# apt update
+root@controlplane:~# apt-get install kubeadm=1.20.0-00
+root@controlplane:~# kubeadm upgrade plan v1.20.0
+root@controlplane:~# kubeadm upgrade apply v1.20.0
+root@controlplane:~# apt-get install kubelet=1.20.0-00
+root@controlplane:~# systemctl daemon-reload
+root@controlplane:~# systemctl restart kubelet
+root@controlplane:~# kubectl uncordon controlplane 
+root@controlplane:~# kubectl drain node01 --ignore-daemonsets
+
+On the node01 node:
+root@node01:~# apt update
+root@node01:~# apt-get install kubeadm=1.20.0-00
+root@node01:~# kubeadm upgrade node
+root@node01:~# apt-get install kubelet=1.20.0-00
+root@node01:~# systemctl daemon-reload
+root@node01:~# systemctl restart kubelet
+
+Back on the controlplane node:
+root@controlplane:~# kubectl uncordon node01
+root@controlplane:~# kubectl get pods -o wide | grep gold (make sure this is scheduled on node)
+
+
+Q2. Solution:
+$ kubectl -n admin2406 get deployment -o custom-columns=DEPLOYMENT:.metadata.name,CONTAINER_IMAGE:.spec.template.spec.containers[].image,READY_REPLICAS:.status.readyReplicas,NAMESPACE:.metadata.namespace --sort-by=.metadata.name > /opt/admin2406_data
+
+Q3.
+Make sure the port for the kube-apiserver is correct. Change port from 4380 to 6443.
+Run the below command to know the cluster information:
+$ kubectl cluster-info --kubeconfig /root/CKA/admin.kubeconfig
+
+Q4.
+Make use of the kubectl create command to create the deployment and explore the --record option while upgrading the deployment image.
+
+Run the below command to create a deployment nginx-deploy:
+
+$ kubectl create deployment  nginx-deploy --image=nginx:1.16
+Run the below command to update the new image for nginx-deploy deployment and to record the version:
+
+$ kubectl set image deployment/nginx-deploy nginx=nginx:1.17 --record
+
+Q5.
+
+Use the command kubectl describe and try to fix the issue.
+Solution manifest file to create a pvc called mysql-alpha-pvc as follows:
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-alpha-pvc
+  namespace: alpha
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: slow
+
+
+Q6.
+Take a help of command etcdctl snapshot save --help options.
+
+export ETCDCTL_API=3
+etcdctl snapshot save --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key --endpoints=127.0.0.1:2379 /opt/etcd-backup.db
+
+
+Q7.
+Use the command kubectl run to create a pod definition file. Add secret volume and update container name in it.
+Alternatively, run the command:
+
+kubectl run secret-1401 --image=busybox --dry-run=client -oyaml --command -- sleep 4800 > admin.yaml
+
+Add the secret volume and mount path to create a pod called secret-1401 in the admin1401 namespace as follows:
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: secret-1401
+  name: secret-1401
+  namespace: admin1401
+spec:
+  volumes:
+  - name: secret-volume
+    # secret volume
+    secret:
+      secretName: dotfile-secret
+  containers:
+  - command:
+    - sleep
+    args:
+    - "4800"
+    image: busybox
+    name: secret-admin
+    # volumes' mount path
+    volumeMounts:
+    - name: secret-volume
+      readOnly: true
+      mountPath: "/etc/secret-volume"
+      
+      
+ /************************************ Practice with Mock Exam - 1************************************/
+ Q1.
+ kubectl run nginx-pod --image=nginx:alpine
+ 
+ Q2.
+ kubectl run messaging --image=redis:alpine -l tier=msg
+ 
+ Q3.
+ kubectl create namespace apx-x9984574
+ 
+ Q4.
+ kubectl get nodes -o json > /opt/outputs/nodes-z3444kd9.json
+ 
+ Q5.
+ kubectl expose pod messaging --port=6379 --name messaging-service
+ 
+ Q6.
+ kubectl create deployment hr-web-app --image=kodekloud/webapp-color --replicas=2
+ 
+ Q7.
+ kubectl run --restart=Never --image=busybox static-busybox --dry-run=client -oyaml --command -- sleep 1000 > /etc/kubernetes/manifests/static-busybox.yaml
+ 
+ Q8.
+ kubectl run temp-bus --image=redis:alpine --namespace=finance --restart=Never
+ 
+ Q9.
+ To know more details of orange pod:
+
+$ kubectl describe po orange
+and look under the initContainers section. There is an issue with the given command. To update the pod with an easiest way by running command:
+
+$ kubectl edit po orange
+It's not possible to update the changes in the running pod so after saving the changes. It will create a temporary file in the default location /tmp/. Use that manifest file and replace with the existing pod:
+
+$ kubectl replace -f /tmp/kubectl-edit-xxxx.yaml --force
+Above command will delete the existing pod and will recreate the new pod with latest changes.
+
+Q10.
+Run the command: kubectl expose deployment hr-web-app --type=NodePort --port=8080 --name=hr-web-app-service --dry-run=client -o yaml > hr-web-app-service.yaml to generate a service definition file.
+Now, in generated service definition file add the nodePort field with the given port number under the ports section and create a service.
+
+Q11.
+kubectl get nodes -o jsonpath='{.items[*].status.nodeInfo.osImage}' > /opt/outputs/nodes_os_x43kj56.txt
+
+Q12.
+Solution manifest file to create a persistent volume pv-analytics as follows:
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-analytics
+spec:
+  capacity:
+    storage: 100Mi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+      path: /pv/data-analytics
+      
+ /************************************ Practice with Mock Exam - 2************************************/     
+ Q1.
+ export ETCDCTL_API=3
+etcdctl snapshot save --endpoints https://[127.0.0.1]:2379 --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key  /opt/etcd-backup.db
+
+Q2.
+Use the command kubectl run and create a pod definition file for redis-storage pod and add volume.
+Alternatively, run the command:
+kubectl run redis-storage --image=redis:alpine --dry-run=client -oyaml > redis-storage.yaml
+and add volume emptyDir in it.
+
+
+Solution manifest file to create a pod redis-storage as follows:
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: redis-storage
+  name: redis-storage
+spec:
+  containers:
+  - image: redis:alpine
+    name: redis-storage
+    volumeMounts:
+    - mountPath: /data/redis
+      name: temp-volume
+  volumes:
+  - name: temp-volume
+    emptyDir: {}
+    
+ 
+ Q3.
+ Solution manifest file to create a pod super-user-pod as follows:
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: super-user-pod
+  name: super-user-pod
+spec:
+  containers:
+  - command:
+    - sleep
+    - "4800"
+    image: busybox:1.28
+    name: super-user-pod
+    securityContext:
+      capabilities:
+        add: ["SYS_TIME"]
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+  
+ Q4.
+ Add a persistentVolumeClaim definition to pod definition file.
+
+
+Solution manifest file to create a pvc my-pvc as follows:
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+       storage: 10Mi
+And then, update the pod definition file as follows:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: use-pv
+  name: use-pv
+spec:
+  containers:
+  - image: nginx
+    name: use-pv
+    volumeMounts:
+    - mountPath: "/data"
+      name: mypd
+  volumes:
+    - name: mypd
+      persistentVolumeClaim:
+        claimName: my-pvc
+Finally, create the pod by running: kubectl create -f /root/CKA/use-pv.yaml
+
+Q5.
+Explore the --record option while creating the deployment while working with the deployment definition file. Then make use of the kubectl apply command to create or update the deployment.
+
+To create a deployment definition file nginx-deploy:
+
+$ kubectl create deployment nginx-deploy --image=nginx:1.16 --dry-run=client -o yaml > deploy.yaml
+To create a resource from definition file and to record:
+
+$ kubectl apply -f deploy.yaml --record
+To view the history of deployment nginx-deploy:
+
+$ kubectl rollout history deployment nginx-deploy
+To upgrade the image to next given version:
+
+$ kubectl set image deployment/nginx-deploy nginx=nginx:1.17 --record
+To view the history of deployment nginx-deploy:
+
+$ kubectl rollout history deployment nginx-deploy
+
+Q6.
+Solution manifest file to create a CSR as follows:
+
+---
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: john-developer
+spec:
+  signerName: kubernetes.io/kube-apiserver-client
+  request: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ1ZEQ0NBVHdDQVFBd0R6RU5NQXNHQTFVRUF3d0VhbTlvYmpDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRApnZ0VQQURDQ0FRb0NnZ0VCQUt2Um1tQ0h2ZjBrTHNldlF3aWVKSzcrVVdRck04ZGtkdzkyYUJTdG1uUVNhMGFPCjV3c3cwbVZyNkNjcEJFRmVreHk5NUVydkgyTHhqQTNiSHVsTVVub2ZkUU9rbjYra1NNY2o3TzdWYlBld2k2OEIKa3JoM2prRFNuZGFvV1NPWXBKOFg1WUZ5c2ZvNUpxby82YU92czFGcEc3bm5SMG1JYWpySTlNVVFEdTVncGw4bgpjakY0TG4vQ3NEb3o3QXNadEgwcVpwc0dXYVpURTBKOWNrQmswZWhiV2tMeDJUK3pEYzlmaDVIMjZsSE4zbHM4CktiSlRuSnY3WDFsNndCeTN5WUFUSXRNclpUR28wZ2c1QS9uREZ4SXdHcXNlMTdLZDRaa1k3RDJIZ3R4UytkMEMKMTNBeHNVdzQyWVZ6ZzhkYXJzVGRMZzcxQ2NaanRxdS9YSmlyQmxVQ0F3RUFBYUFBTUEwR0NTcUdTSWIzRFFFQgpDd1VBQTRJQkFRQ1VKTnNMelBKczB2czlGTTVpUzJ0akMyaVYvdXptcmwxTGNUTStsbXpSODNsS09uL0NoMTZlClNLNHplRlFtbGF0c0hCOGZBU2ZhQnRaOUJ2UnVlMUZnbHk1b2VuTk5LaW9FMnc3TUx1a0oyODBWRWFxUjN2SSsKNzRiNnduNkhYclJsYVhaM25VMTFQVTlsT3RBSGxQeDNYVWpCVk5QaGhlUlBmR3p3TTRselZuQW5mNm96bEtxSgpvT3RORStlZ2FYWDdvc3BvZmdWZWVqc25Yd0RjZ05pSFFTbDgzSkljUCtjOVBHMDJtNyt0NmpJU3VoRllTVjZtCmlqblNucHBKZWhFUGxPMkFNcmJzU0VpaFB1N294Wm9iZDFtdWF4bWtVa0NoSzZLeGV0RjVEdWhRMi80NEMvSDIKOWk1bnpMMlRST3RndGRJZjAveUF5N05COHlOY3FPR0QKLS0tLS1FTkQgQ0VSVElGSUNBVEUgUkVRVUVTVC0tLS0tCg==
+  usages:
+  - digital signature
+  - key encipherment
+  - client auth
+  groups:
+  - system:authenticated
+  
+Q7.
+ Use the command kubectl run and create a nginx pod and busybox pod. Resolve it, nginx service and its pod name from busybox pod.
+
+
+To create a pod nginx-resolver and expose it internally:
+
+kubectl run nginx-resolver --image=nginx
+kubectl expose pod nginx-resolver --name=nginx-resolver-service --port=80 --target-port=80 --type=ClusterIP
+To create a pod test-nslookup. Test that you are able to look up the service and pod names from within the cluster:
+
+kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nslookup nginx-resolver-service
+kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nslookup nginx-resolver-service > /root/CKA/nginx.svc
+Get the IP of the nginx-resolver pod and replace the dots(.) with hyphon(-) which will be used below.
+
+kubectl get pod nginx-resolver -o wide
+kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nslookup <P-O-D-I-P.default.pod> > /root/CKA/nginx.pod
+
+Q8.
+To create a static pod called nginx-critical by using below command:
+
+kubectl run nginx-critical --image=nginx --dry-run=client -o yaml > static.yaml
+Copy the contents of this file or use scp command to transfer this file from controlplane to node01 node.
+
+root@controlplane:~# scp static.yaml node01:/root/
+To know the IP Address of the node01 node:
+
+root@controlplane:~# kubectl get nodes -o wide
+
+# Perform SSH
+root@controlplane:~# ssh node01
+OR
+root@controlplane:~# ssh <IP of node01>
+On node01 node:
+Check if static pod directory is present which is /etc/kubernetes/manifests, if it's not present then create it.
+
+root@node01:~# mkdir -p /etc/kubernetes/manifests
+Add that complete path to the staticPodPath field in the kubelet config.yaml file.
+
+root@node01:~# vi /var/lib/kubelet/config.yaml
+now, move/copy the static.yaml to path /etc/kubernetes/manifests/.
+
+root@node01:~# cp /root/static.yaml /etc/kubernetes/manifests/
+Go back to the controlplane node and check the status of static pod:
+
+root@node01:~# exit
+logout
+root@controlplane:~# kubectl get pods 
+
+
+ /************************************ Practice with Mock Exam - 3 ************************************/ 
+ Q1.
+ Pods authenticate to the API Server using ServiceAccounts. If the serviceAccount name is not specified, the default service account for the namespace is used during a pod creation.
+Reference: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+
+Now, create a service account pvviewer:
+
+kubectl create serviceaccount pvviewer
+To create a clusterrole:
+
+kubectl create clusterrole pvviewer-role --resource=persistentvolumes --verb=list
+To create a clusterrolebinding:
+
+kubectl create clusterrolebinding pvviewer-role-binding --clusterrole=pvviewer-role --serviceaccount=default:pvviewer
+Solution manifest file to create a new pod called pvviewer as follows:
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: pvviewer
+  name: pvviewer
+spec:
+  containers:
+  - image: redis
+    name: pvviewer
+  # Add service account name
+  serviceAccountName: pvviewer
+  
+  Q2.
+  Explore the jsonpath loop.
+kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}' > /root/CKA/node_ips
+
+Q3.
+Solution manifest file to create a multi-container pod multi-pod as follows:
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: multi-pod
+spec:
+  containers:
+  - image: nginx
+    name: alpha
+    env:
+    - name: name
+      value: alpha
+  - image: busybox
+    name: beta
+    command: ["sleep", "4800"]
+    env:
+    - name: name
+      value: beta
+      
+  Q4.
+  Solution manifest file to create a pod called non-root-pod as follows:
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: non-root-pod
+spec:
+  securityContext:
+    runAsUser: 1000
+    fsGroup: 2000
+  containers:
+  - name: non-root-pod
+    image: redis:alpine
+Verify the user and group IDs by using below command:
+
+kubectl exec -it non-root-pod -- id
+
+
+Q5.
+Solution manifest file to create a network policy ingress-to-nptest as follows:
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-to-nptest
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      run: np-test-1
+  policyTypes:
+  - Ingress
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 80
+      
+Q6. 
+  To add taints on the node01 worker node:
+
+kubectl taint node node01 env_type=production:NoSchedule
+Now, deploy dev-redis pod and to ensure that workloads are not scheduled to this node01 worker node.
+
+kubectl run dev-redis --image=redis:alpine
+To view the node name of recently deployed pod:
+
+kubectl get pods -o wide
+Solution manifest file to deploy new pod called prod-redis with toleration to be scheduled on node01 worker node.
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prod-redis
+spec:
+  containers:
+  - name: prod-redis
+    image: redis:alpine
+  tolerations:
+  - effect: NoSchedule
+    key: env_type
+    operator: Equal
+    value: production     
+To view only prod-redis pod with less details:
+
+kubectl get pods -o wide | grep prod-redis
+
+
+Q7. 
+Create a namespace if it doesn't exist:
+
+kubectl create namespace hr
+and then create a hr-pod with given details:
+
+kubectl run hr-pod --image=redis:alpine --namespace=hr --labels=environment=production,tier=frontend
+
+
+Q8.
+Verify host and port for kube-apiserver are correct.
+Open the super.kubeconfig in vi editor.
+Change the 9999 port to 6443 and run the below command to verify:
+
+kubectl cluster-info --kubeconfig=/root/CKA/super.kubeconfig
+
+
+Q9.
+Use the command kubectl scale to increase the replica count to 3.
+
+kubectl scale deploy nginx-deploy --replicas=3
+The controller-manager is responsible for scaling up pods of a replicaset. If you inspect the control plane components in the kube-system namespace, you will see that the controller-manager is not running.
+
+kubectl get pods -n kube-system
+The command running inside the controller-manager pod is incorrect.
+After fix all the values in the file and wait for controller-manager pod to restart.
+Alternatively, you can run sed command to change all values at once:
+
+sed -i 's/kube-contro1ler-manager/kube-controller-manager/g' /etc/kubernetes/manifests/kube-controller-manager.yaml
+This will fix the issues in controller-manager yaml file.
+At last, inspect the deployment by using below command:
+
+kubectl get deploy
+
