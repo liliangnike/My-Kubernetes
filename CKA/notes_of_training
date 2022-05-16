@@ -1934,6 +1934,8 @@ $ kubectl rollout history deployment nginx-deploy
 Q6.
 Solution manifest file to create a CSR as follows:
 
+Solution manifest file to create a CSR as follows:
+
 ---
 apiVersion: certificates.k8s.io/v1
 kind: CertificateSigningRequest
@@ -1948,6 +1950,16 @@ spec:
   - client auth
   groups:
   - system:authenticated
+To approve this certificate, run: kubectl certificate approve john-developer
+
+Next, create a role developer and rolebinding developer-role-binding, run the command:
+
+$ kubectl create role developer --resource=pods --verb=create,list,get,update,delete --namespace=development
+
+$ kubectl create rolebinding developer-role-binding --role=developer --user=john --namespace=development
+To verify the permission from kubectl utility tool:
+
+$ kubectl auth can-i update pods --as=john --namespace=development
   
 Q7.
  Use the command kubectl run and create a nginx pod and busybox pod. Resolve it, nginx service and its pod name from busybox pod.
